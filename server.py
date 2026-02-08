@@ -142,23 +142,18 @@ def closest_road():
 def response():
     return "Success"
 
-
-@app.before_first_request
-def setup_db_hook():
-    # This runs once per Vercel function instance when the first request hits it.
-    if pool is None:
-         app.logger.info("Running DB initialization via before_first_request hook.")
-         initialize_and_warmup_db(app)
+if pool is None:
+    # We call it here, passing 'app' so it can use app.logger
+    initialize_and_warmup_db(app) 
 
 
-if __name__ == "__main__":
-    initialize_and_warmup_db()  # Set up the pool and warm up connections
-    
+if __name__ == "__main__":    
     from waitress import serve
     print("Starting Waitress server on http://127.0.0.1:5000")
     
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
