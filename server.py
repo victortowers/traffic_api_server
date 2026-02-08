@@ -9,10 +9,10 @@ import os
 
 dotenv.dotenv()
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST"),
-    "database": os.getenv("DB_HOST"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"), # Put your actual password here exactly as it is
+    "host": os.environ.get("DB_HOST"),
+    "database": os.environ.get("DB_HOST"),
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD"), # Put your actual password here exactly as it is
     "port": 5432
 }
 
@@ -151,3 +151,4 @@ if __name__ == "__main__":
     
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
