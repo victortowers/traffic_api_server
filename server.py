@@ -34,8 +34,8 @@ def initialize_and_warmup_db():
     boot_start = time.perf_counter_ns()
     # Create the connection ONCE
     
-    minimium_connections = 6
-    maximum_connections = 25
+    minimium_connections = 2
+    maximum_connections = 8
     pool = ThreadedConnectionPool(minconn=minimium_connections,maxconn=maximum_connections,**DB_CONFIG)
  
     for i in range(minimium_connections):
@@ -152,6 +152,7 @@ if __name__ == "__main__":
     
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
