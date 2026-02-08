@@ -10,7 +10,7 @@ import os
 dotenv.load_dotenv()
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
-    "database": os.getenv("DB_HOST"),
+    "database": os.getenv("DB_DATABASE"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"), # Put your actual password here exactly as it is
     "port": 5432
@@ -143,6 +143,14 @@ def response():
     return "Success"
 
 
+@app.before_first_request
+def setup_db_hook():
+    # This runs once per Vercel function instance when the first request hits it.
+    if pool is None:
+         app.logger.info("Running DB initialization via before_first_request hook.")
+         initialize_and_warmup_db(app)
+
+
 if __name__ == "__main__":
     initialize_and_warmup_db()  # Set up the pool and warm up connections
     
@@ -151,6 +159,7 @@ if __name__ == "__main__":
     
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
