@@ -143,8 +143,7 @@ def response():
     return "Success"
 
 if pool is None:
-    # We call it here, passing 'app' so it can use app.logger
-    initialize_and_warmup_db(app) 
+    initialize_and_warmup_db() 
 
 
 if __name__ == "__main__":    
@@ -153,6 +152,7 @@ if __name__ == "__main__":
     
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
