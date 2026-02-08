@@ -7,7 +7,7 @@ import time
 import json
 import os
 
-dotenv.dotenv()
+dotenv.load_dotenv()
 DB_CONFIG = {
     "host": os.getenv("DB_HOST"),
     "database": os.getenv("DB_HOST"),
@@ -151,5 +151,6 @@ if __name__ == "__main__":
     
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
