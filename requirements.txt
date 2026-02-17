@@ -3,3 +3,5 @@ psycopg2-binary
 shapely
 waitress
 python-dotenv
+flask_limiter
+flask_cors
