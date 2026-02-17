@@ -5,3 +5,4 @@ waitress
 python-dotenv
 flask_limiter
 flask_cors
+redis
