@@ -108,6 +108,7 @@ def initialize_and_warmup_db():
                 
         except Exception as e:
             app.logger.warning(f"Warmup failed on connection {i+1}: {e}")
+            exit()
         
         finally:
             try:
@@ -219,4 +220,5 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
