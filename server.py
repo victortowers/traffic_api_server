@@ -19,10 +19,11 @@ DB_CONFIG = {
     "database": os.getenv("DB_DATABASE"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"), # Put your actual password here exactly as it is
-    "port": 5432
+    "port": 6543
 }
 
-
+if not DB_CONFIG:
+    exit()
 
 app = Flask(__name__)
 CORS(app)
@@ -89,6 +90,7 @@ def api_query_count():
 def initialize_and_warmup_db():
     global pool
     boot_start = time.perf_counter_ns()
+    conn = None
     # Create the connection ONCE
     
     minimium_connections = 1
@@ -220,5 +222,6 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
