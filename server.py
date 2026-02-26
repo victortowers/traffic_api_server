@@ -99,7 +99,8 @@ def initialize_and_warmup_db():
  
     for i in range(minimium_connections):
         try:
-            conn = pool.getconn()
+            if pool:
+                conn = pool.getconn()
         # The FIRST time you run this, planning time will be ~28ms
             with conn.cursor() as cur:
                 start = time.perf_counter_ns()
@@ -222,6 +223,7 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
