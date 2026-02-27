@@ -19,13 +19,13 @@ DB_CONFIG = {
     "database": os.getenv("DB_DATABASE"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"), # Put your actual password here exactly as it is
-    "port": 6543
+    "port": 5432
 }
 
-if not DB_CONFIG:
-    exit()
+
 
 app = Flask(__name__)
+boot_time = time.perf_counter_ns()
 CORS(app)
 
 # --- Function to correctly get Client IP on Vercel/Proxies ---
@@ -72,7 +72,7 @@ pool = None
 
 query = """
     
-    SELECT road_name, way_id, geom,
+    SELECT road_name, way_id, custom_prompt, geom,
     ST_Distance(geom, ST_MakePoint(%s, %s)::geography) as distance_meters
     FROM roads_geojson
     WHERE ST_DWithin(geom, ST_MakePoint(%s, %s)::geography, 20)
@@ -85,12 +85,10 @@ def api_query_count():
     current_count = redis_client.incr(COUNTER_KEY) 
     app.logger.warning(f"Endpoint '/closest-road' has been called {current_count} times.")
     return current_count
-
-    
+   
 def initialize_and_warmup_db():
     global pool
     boot_start = time.perf_counter_ns()
-    conn = None
     # Create the connection ONCE
     
     minimium_connections = 1
@@ -98,9 +96,9 @@ def initialize_and_warmup_db():
     pool = ThreadedConnectionPool(minconn=minimium_connections,maxconn=maximum_connections,**DB_CONFIG)
  
     for i in range(minimium_connections):
+        conn = pool.getconn()
+        
         try:
-            if pool:
-                conn = pool.getconn()
         # The FIRST time you run this, planning time will be ~28ms
             with conn.cursor() as cur:
                 start = time.perf_counter_ns()
@@ -111,7 +109,6 @@ def initialize_and_warmup_db():
                 
         except Exception as e:
             app.logger.warning(f"Warmup failed on connection {i+1}: {e}")
-            exit()
         
         finally:
             try:
@@ -156,6 +153,7 @@ def database_search(lat, lon):
         
         return {
             "road_name": None,
+            "custom_prompt": None,
             "road_id": None,
             "coordinates": None,
             "distance_meters": 0,
@@ -164,7 +162,7 @@ def database_search(lat, lon):
         }
         
     else:
-        road_name, road_id, coordinates, distance = results
+        road_name, road_id, custom_prompt, coordinates, distance = results
         byte_data = bytes.fromhex(coordinates)
         
         # 2. Load geometry from bytes
@@ -177,6 +175,7 @@ def database_search(lat, lon):
         
         return {
             "road_name": road_name,
+            "custom_prompt": custom_prompt,
             "road_id": road_id,
             "coordinates": [out_lon, out_lat],
             "distance_meters": distance,
@@ -184,8 +183,7 @@ def database_search(lat, lon):
             "processing_time_ms": round((database_stop - database_start) / 1e6 - query_time, 4)
         }
 
-@app.route('/closest-road', methods=['GET'])
-@limiter.limit("60 per minute")
+@app.route('/api/closest-road', methods=['GET'])
 def closest_road():
     request_start = time.perf_counter_ns()
     try:
@@ -205,7 +203,7 @@ def closest_road():
 def response():
     return "Success"
 
-@app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health():
     api_count_variable = api_query_count()
     now = time.perf_counter_ns()
@@ -215,15 +213,12 @@ def health():
 
 
 if __name__ == "__main__":
-    initialize_and_warmup_db()  # Set up the pool and warm up connections
-    boot_time = time.perf_counter_ns()
+    initialize_and_warmup_db()
+    print(app.url_map)
+    # Set up the pool and warm up connections
     
     from waitress import serve
     print("Starting Waitress server. Listening on all interfaces @ port 5000")
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
-
-
-
-
