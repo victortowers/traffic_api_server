@@ -92,7 +92,7 @@ def initialize_and_warmup_db():
     # Create the connection ONCE
     
     minimium_connections = 1
-    maximum_connections = 5
+    maximum_connections = 1
     pool = ThreadedConnectionPool(minconn=minimium_connections,maxconn=maximum_connections,**DB_CONFIG)
  
     for i in range(minimium_connections):
@@ -222,4 +222,5 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
