@@ -212,6 +212,12 @@ def health():
     uptime_days = uptime_seconds / (24 * 3600)
     return f"Healthy. Global Gateways have served {api_count_variable} queries. Uptime: {uptime_days:.2f} days"
 
+initialize_and_warmup_db()
+print(app.url_map)
+
+from waitress import serve
+print("Starting Waitress server. Listening on all interfaces @ port 5000")
+serve(app, host='0.0.0.0', port=5000)
 
 if __name__ == "__main__":
     initialize_and_warmup_db()
@@ -223,6 +229,7 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
