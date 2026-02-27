@@ -19,7 +19,7 @@ DB_CONFIG = {
     "database": os.getenv("DB_DATABASE"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"), # Put your actual password here exactly as it is
-    "port": 5432
+    "port": os.getenv("DB_PORT")
 }
 
 
@@ -222,3 +222,4 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
