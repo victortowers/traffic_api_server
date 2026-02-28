@@ -201,8 +201,7 @@ def closest_road():
 
 @app.route('/', methods=['GET'])
 def response():
-    warmup_test = database_search(-23.4790844, -46.8576698)
-    return warmup_test
+    return "Sucess", 200
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -221,6 +220,7 @@ if __name__ == "__main__":
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
