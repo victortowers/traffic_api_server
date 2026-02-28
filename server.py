@@ -216,15 +216,12 @@ initialize_and_warmup_db()
 print(app.url_map)
 
 if __name__ == "__main__":
-    initialize_and_warmup_db()
-    print(app.url_map)
-    # Set up the pool and warm up connections
-    
     from waitress import serve
     print("Starting Waitress server. Listening on all interfaces @ port 5000")
     CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
     serve(app, host='0.0.0.0', port=5000)
+
 
 
 
