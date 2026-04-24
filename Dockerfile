@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-COPY api3.py .
+COPY server.py .
 
 EXPOSE 5000
-CMD ["python", "api3.py"]
+CMD ["python", "server.py"]
