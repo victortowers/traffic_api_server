@@ -9,5 +9,6 @@ Tested with Vercel and Render.
 - Uses Port 5000
 - Dependencies: requirements.txt
 - Dockerized version (build yourself).
+- Tested in Vercel and Cloud Run
 
-
+Requires environment variables, which are not documented. 
