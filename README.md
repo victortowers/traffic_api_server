@@ -10,5 +10,5 @@ Tested with Vercel and Render.
 - Dependencies: requirements.txt
 - Dockerized version (build yourself).
 - Tested in Vercel and Cloud Run
+- Requires a PostGIS database
 
-Requires environment variables, which are not documented. 
