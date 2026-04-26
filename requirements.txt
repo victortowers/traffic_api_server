@@ -1,8 +1,6 @@
-flask
+fastapi
 psycopg2-binary
 shapely
-waitress
+uvicorn
 python-dotenv
-flask_limiter
-flask_cors
 redis
