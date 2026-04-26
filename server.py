@@ -22,7 +22,7 @@ DB_CONFIG = {
     "port": os.getenv("DB_PORT")
 }
 
-
+ENABLE_DB_WARMUP = os.getenv("ENABLE_DB_WARMUP", "False") == "True"
 
 app = Flask(__name__)
 boot_time = time.perf_counter_ns()
@@ -201,7 +201,7 @@ def closest_road():
 
 @app.route('/', methods=['GET'])
 def response():
-    return "Sucess", 200
+    return "API Success", 200
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -211,8 +211,9 @@ def health():
     uptime_days = uptime_seconds / (24 * 3600)
     return f"Healthy. Global Gateways have served {api_count_variable} queries. Uptime: {uptime_days:.2f} days"
 
-initialize_and_warmup_db()
-print(app.url_map)
+if ENABLE_DB_WARMUP:
+    initialize_and_warmup_db()
+    print(app.url_map)
 
 if __name__ == "__main__":
     from waitress import serve
