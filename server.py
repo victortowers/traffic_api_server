@@ -122,7 +122,7 @@ def initialize_and_warmup_db():
             except Exception as e:
                 app.logger.warning(f"Error closing resources during warmup on connection {i+1}: {e}")
                 pass
-            
+                
     boot_end = time.perf_counter_ns()
     app.logger.warning(f"Boot time (including initial query): {(boot_end - boot_start) / 1e6:.4f} ms")
 
@@ -214,6 +214,9 @@ def health():
 if ENABLE_DB_WARMUP:
     initialize_and_warmup_db()
     print(app.url_map)
+
+else:
+    pool = ThreadedConnectionPool(minconn=1,maxconn=3,**DB_CONFIG)
 
 if __name__ == "__main__":
     from waitress import serve
