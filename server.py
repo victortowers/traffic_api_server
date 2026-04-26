@@ -1,16 +1,11 @@
-from flask import request, Flask, jsonify
 from psycopg2.pool import ThreadedConnectionPool
-from flask_limiter import Limiter
-from flask_limiter import Limiter
-from flask_cors import CORS
-
+from fastapi import FastAPI
 
 import redis
 from shapely.wkb import loads
 import dotenv
 import psycopg2
 import time
-import json
 import os
 
 dotenv.load_dotenv()
@@ -24,48 +19,15 @@ DB_CONFIG = {
 
 ENABLE_DB_WARMUP = os.getenv("ENABLE_DB_WARMUP", "False") == "True"
 
-app = Flask(__name__)
+app = FastAPI()
 boot_time = time.perf_counter_ns()
-CORS(app)
-
-# --- Function to correctly get Client IP on Vercel/Proxies ---
-def get_client_ip():
-    """
-    Fetches the actual client IP from X-Forwarded-For header,
-    which is necessary when running behind a proxy like Vercel.
-    """
-    if request.headers.get('x-forwarded-for'):
-        # Take the first IP in the list, which is typically the client's IP
-        return request.headers.getlist("x-forwarded-for")[0]
-    else:
-        # Fallback for direct connections (e.g., local development)
-        return request.remote_addr
-
 
 # --- Get Redis URL from Environment Variables ---
 REDIS_URL = os.getenv('REDIS_URL')
 
 # --- Initialization ---
 if REDIS_URL:
-    # The credentials (user/pass) are parsed *from* the URL string here
     redis_client = redis.from_url(REDIS_URL, decode_responses=True)
-
-    # Initialize Limiter passing the pre-configured Redis CLIENT INSTANCE
-    limiter = Limiter(
-        key_func=get_client_ip, # Use the correct IP function
-        app=app,
-        storage_uri=REDIS_URL, # Pass the connected client object
-        default_limits=["60 per minute"]
-    )
-else:
-    # Fallback for local development
-    print("WARNING: REDIS_URL not found. Limiter will use in-memory storage.")
-    limiter = Limiter(
-        key_func=get_client_ip,
-        app=app,
-        storage_uri="memory://",
-        default_limits=["60 per minute"]
-    )
 
 times = []
 pool = None
@@ -83,7 +45,7 @@ query = """
 def api_query_count():
     COUNTER_KEY = 'api:closest_road:call_count'
     current_count = redis_client.incr(COUNTER_KEY) 
-    app.logger.warning(f"Endpoint '/closest-road' has been called {current_count} times.")
+    ## app.logger.warning(f"Endpoint '/closest-road' has been called {current_count} times.")
     return current_count
    
 def initialize_and_warmup_db():
@@ -126,7 +88,7 @@ def initialize_and_warmup_db():
     boot_end = time.perf_counter_ns()
     app.logger.warning(f"Boot time (including initial query): {(boot_end - boot_start) / 1e6:.4f} ms")
 
-def fetch_closest_road(lat, lon):
+async def fetch_closest_road(lat, lon):
     global pool
     local_pool = pool
     try:
@@ -143,10 +105,9 @@ def fetch_closest_road(lat, lon):
         if conn:
             local_pool.putconn(conn) # Return connection to pool
 
-def database_search(lat, lon):
+async def database_search(lat, lon):
     database_start = time.perf_counter_ns()
-    results, query_time = fetch_closest_road(lat, lon)
-    print(results)
+    results, query_time = await fetch_closest_road(lat, lon)
     if results is None:
         database_stop = time.perf_counter_ns()
         api_query_count()
@@ -171,7 +132,7 @@ def database_search(lat, lon):
         out_lat = geom_object.y
         
         database_stop = time.perf_counter_ns()
-        api_query_count()
+        await api_query_count()
         
         return {
             "road_name": road_name,
@@ -183,27 +144,20 @@ def database_search(lat, lon):
             "processing_time_ms": round((database_stop - database_start) / 1e6 - query_time, 4)
         }
 
-@app.route('/api/closest-road', methods=['GET'])
-def closest_road():
-    request_start = time.perf_counter_ns()
-    try:
-        lat = float(request.args.get("lat"))
-        lon = float(request.args.get("lon"))
-    except (TypeError, ValueError):
-        return {"error": "Invalid or missing 'lat' and 'lon' parameters"}, 400
-    
-    search_query = database_search(lat, lon)
-    #if result["coordinates"] is None:
-     #   return {"error": "Out of Range"}, 404
-    request_end = time.perf_counter_ns()
-    app.logger.warning(f"Total request time: {(request_end - request_start) / 1e6:.4f} ms")
-    return search_query
+@app.get('/api/closest-road')
+async def closest_road(lat: float, lon: float):
+    if lat and lon:
+        search_query = await database_search(lat, lon)
+        print(search_query)
+        return search_query
+    else:
+        return {"error": "Invalid or missing 'lat' and 'lon' parameters"}
 
-@app.route('/', methods=['GET'])
+@app.get('/')
 def response():
     return "API Success", 200
 
-@app.route('/api/health', methods=['GET'])
+@app.get('/api/health')
 def health():
     api_count_variable = api_query_count()
     now = time.perf_counter_ns()
@@ -219,12 +173,10 @@ else:
     pool = ThreadedConnectionPool(minconn=1,maxconn=3,**DB_CONFIG)
 
 if __name__ == "__main__":
-    from waitress import serve
+    import uvicorn
     print("Starting Waitress server. Listening on all interfaces @ port 5000")
-    CORS(app)  # Enable CORS for all routes and origins
     # Waitress handles concurrency itself, similar to Gunicorn's worker concept
-    serve(app, host='0.0.0.0', port=5000)
-
+    uvicorn.run(app, host='0.0.0.0', port=5000)
 
 
 
