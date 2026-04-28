@@ -155,7 +155,7 @@ async def closest_road(lat: float, lon: float):
 
 @app.get('/')
 def response():
-    return "API Success", 200
+    return {"status": "Success"}
 
 @app.get('/api/health')
 def health():
@@ -163,7 +163,12 @@ def health():
     now = time.perf_counter_ns()
     uptime_seconds = (now - boot_time) / 1e9
     uptime_days = uptime_seconds / (24 * 3600)
-    return f"Healthy. Global Gateways have served {api_count_variable} queries. Uptime: {uptime_days:.2f} days"
+    
+    return {
+    "status": "Healthy",
+    "queries_served": api_count_variable,
+    "uptime_days": uptime_days
+    }
 
 if ENABLE_DB_WARMUP:
     initialize_and_warmup_db()
